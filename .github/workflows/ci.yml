@@ -113,11 +113,15 @@ jobs:
 
       - name: Terraform Plan
         working-directory: ./terraform
+        env:
+          TF_VAR_exchange_api_key: ${{ secrets.EXCHANGE_API_KEY }}
         run: |
           terraform plan -input=false -out=tfplan \
             -var="s3_lambda_key=${{ steps.upload.outputs.s3_key }}"
 
       - name: Terraform Apply
         working-directory: ./terraform
+        env:
+          TF_VAR_exchange_api_key: ${{ secrets.EXCHANGE_API_KEY }}
         run: |
           terraform apply -input=false -auto-approve tfplan

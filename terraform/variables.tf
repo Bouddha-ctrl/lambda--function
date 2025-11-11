@@ -60,6 +60,13 @@ variable "s3_bucket_name" {
   default     = "bouddha-lastest-records"
 }
 
+variable "exchange_api_key" {
+  description = "API key for exchange rate API"
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
