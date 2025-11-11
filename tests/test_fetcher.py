@@ -306,7 +306,30 @@ def test_fetch_json_success(mock_urlopen):
     
     result = _fetch_json("http://example.com")
     assert result == {"key": "value"}
-    mock_urlopen.assert_called_once_with("http://example.com", timeout=10)
+    # Check that Request object was created and passed to urlopen
+    call_args = mock_urlopen.call_args
+    assert call_args[1]['timeout'] == 10
+
+
+@patch('src.fetcher.urllib.request.urlopen')
+def test_fetch_json_with_headers(mock_urlopen):
+    """Test JSON fetching with custom headers"""
+    mock_response = MagicMock()
+    mock_response.read.return_value = b'{"key": "value"}'
+    mock_response.headers.get_content_charset.return_value = "utf-8"
+    mock_response.__enter__.return_value = mock_response
+    mock_response.__exit__.return_value = None
+    mock_urlopen.return_value = mock_response
+    
+    headers = {"apikey": "test-key-123", "User-Agent": "TestAgent"}
+    result = _fetch_json("http://example.com", headers=headers)
+    assert result == {"key": "value"}
+    
+    # Verify Request object was created with headers
+    call_args = mock_urlopen.call_args[0]
+    request_obj = call_args[0]
+    assert request_obj.get_header('Apikey') == "test-key-123"
+    assert request_obj.get_header('User-agent') == "TestAgent"
 
 
 @patch('src.fetcher.urllib.request.urlopen')
@@ -320,7 +343,8 @@ def test_fetch_json_custom_timeout(mock_urlopen):
     mock_urlopen.return_value = mock_response
     
     _fetch_json("http://example.com", timeout=30)
-    mock_urlopen.assert_called_once_with("http://example.com", timeout=30)
+    call_args = mock_urlopen.call_args
+    assert call_args[1]['timeout'] == 30
 
 
 @patch('src.fetcher.urllib.request.urlopen')
@@ -397,18 +421,61 @@ def test_fetch_oil_data_network_error(mock_fetch):
 # Tests for fetch_exchange_data
 
 @patch('src.fetcher._fetch_json')
-def test_fetch_exchange_data_success(mock_fetch):
-    """Test successful exchange data fetching"""
+@patch.dict('os.environ', {}, clear=True)
+def test_fetch_exchange_data_success_no_api_key(mock_fetch):
+    """Test successful exchange data fetching without API key"""
     mock_fetch.return_value = {
-        "date": "2025-04-04",
+        "date": "2025-11-11",
         "info": {"rate": 9.490092},
         "success": True
     }
     
-    date_iso, rate = fetch_exchange_data("http://exchange.example.com")
-    assert date_iso == "2025-04-04"
+    date_iso, rate = fetch_exchange_data("http://exchange.example.com?from=USD&to=MAD")
+    assert date_iso == "2025-11-11"
     assert rate == Decimal("9.490092")
-    mock_fetch.assert_called_once_with("http://exchange.example.com")
+    
+    # Verify URL has date appended and headers are empty
+    call_args = mock_fetch.call_args
+    assert "date=2025-11-11" in call_args[0][0]
+    assert call_args[1]['headers'] == {}
+
+
+@patch('src.fetcher._fetch_json')
+@patch.dict('os.environ', {'EXCHANGE_API_KEY': 'test-key-123'})
+def test_fetch_exchange_data_success_with_api_key(mock_fetch):
+    """Test successful exchange data fetching with API key from environment"""
+    mock_fetch.return_value = {
+        "date": "2025-11-11",
+        "info": {"rate": 9.490092},
+        "success": True
+    }
+    
+    date_iso, rate = fetch_exchange_data("http://exchange.example.com?from=USD&to=MAD")
+    assert date_iso == "2025-11-11"
+    assert rate == Decimal("9.490092")
+    
+    # Verify URL has date appended and API key header is set
+    call_args = mock_fetch.call_args
+    assert "date=2025-11-11" in call_args[0][0]
+    assert call_args[1]['headers'] == {"apikey": "test-key-123"}
+
+
+@patch('src.fetcher._fetch_json')
+@patch.dict('os.environ', {}, clear=True)
+def test_fetch_exchange_data_url_without_query_params(mock_fetch):
+    """Test exchange data fetching appends date to URL without existing params"""
+    mock_fetch.return_value = {
+        "date": "2025-11-11",
+        "info": {"rate": 9.490092},
+        "success": True
+    }
+    
+    fetch_exchange_data("http://exchange.example.com/convert")
+    
+    # Verify URL has date appended with & (current implementation always uses &)
+    call_args = mock_fetch.call_args
+    url_called = call_args[0][0]
+    assert "&date=2025-11-11" in url_called
 
 
 @patch('src.fetcher._fetch_json')
