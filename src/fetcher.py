@@ -2,6 +2,7 @@
 import json
 import logging
 import urllib.request
+import os
 from decimal import Decimal
 from datetime import datetime
 
@@ -13,12 +14,17 @@ class ExtractionError(Exception):
     """Raised when a value or date cannot be extracted from an API response."""
 
 
-def _fetch_json(url, timeout=10):
+def _fetch_json(url, timeout=10, headers=None):
     """
     Internal helper: fetch a URL and parse JSON. Raises on error.
     """
     try:
-        with urllib.request.urlopen(url, timeout=timeout) as resp:
+        req = urllib.request.Request(url)
+        if headers:
+            for key, value in headers.items():
+                req.add_header(key, value)
+        
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
             charset = resp.headers.get_content_charset() or "utf-8"
             body = resp.read().decode(charset)
             return json.loads(body)
@@ -175,8 +181,25 @@ def fetch_oil_data(url):
 def fetch_exchange_data(url):
     """
     Fetch exchange rate data from the given URL.
+    Appends today's date in format yyyy-MM-dd to the URL.
+    Adds API key from environment variable EXCHANGE_API_KEY to headers.
     Returns: (date_iso, rate_decimal)
     Raises: ExtractionError or network-related exceptions on failure.
     """
-    resp = _fetch_json(url)
+    from datetime import datetime
+    
+    # Get today's date in yyyy-MM-dd format
+    today = datetime.now().strftime("%Y-%m-%d")
+    
+    # Append date to URL
+    url_with_date = f"{url}&date={today}"
+    
+    # Get API key from environment
+    api_key = os.environ.get("EXCHANGE_API_KEY", "")
+    headers = {}
+    if api_key:
+        headers["apikey"] = api_key
+    
+    # Fetch with headers
+    resp = _fetch_json(url_with_date, headers=headers)
     return parse_exchange_rate(resp)
