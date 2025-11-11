@@ -5,9 +5,15 @@ import traceback
 import os
 from datetime import datetime
 
-from src.fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
-from src.ssm_resolver import get_store_urls
-from src.storage import save_to_dynamodb, save_latest_to_s3
+# Support both Lambda (flat structure) and local dev (src. prefix)
+try:
+    from fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
+    from ssm_resolver import get_store_urls
+    from storage import save_to_dynamodb, save_latest_to_s3
+except ImportError:
+    from src.fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
+    from src.ssm_resolver import get_store_urls
+    from src.storage import save_to_dynamodb, save_latest_to_s3
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
