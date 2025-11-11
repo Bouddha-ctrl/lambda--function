@@ -1,7 +1,7 @@
 variable "aws_region" {
   description = "AWS region to deploy to"
   type        = string
-  default     = "eu-east-1"
+  default     = "eu-west-1"
 }
 
 variable "lambda_zip_path" {
@@ -14,7 +14,7 @@ variable "lambda_zip_path" {
 variable "s3_lambda_bucket" {
   description = "S3 bucket that holds the lambda zip (optional; set in CI)"
   type        = string
-  default     = ""
+  default     = "bouddha-lambda-artifacts"
 }
 
 variable "s3_lambda_key" {
@@ -23,19 +23,11 @@ variable "s3_lambda_key" {
   default     = ""
 }
 
-# Legacy: allow injecting direct URLs JSON into the Lambda (kept for backward compatibility)
-variable "store_json" {
-  description = "JSON string that contains the API URLs, will be injected as Lambda env var STORE (legacy)"
+# SSM parameter name that contains the JSON with oil_api and exchange_api URLs
+variable "store_param_name" {
+  description = "SSM parameter name that contains JSON with oil_api and exchange_api (e.g., /prod/apis/all-urls)"
   type        = string
-  default     = ""
-}
-
-# Preferred: SSM parameter names mapping (JSON), e.g.
-# {"oil_param":"/prod/apis/oil-price","exchange_param":"/prod/apis/exchange-rate"}
-variable "store_ssm_json" {
-  description = "JSON string that contains SSM parameter names mapping to fetch API URLs for the Lambda (preferred). Injected as STORE_SSM env var."
-  type        = string
-  default     = ""
+  default     = "/prod/apis/all-urls"
 }
 
 variable "lambda_function_name" {
@@ -56,10 +48,22 @@ variable "schedule_expression" {
   default     = "cron(0 0 * * ? *)"
 }
 
+variable "enable_s3" {
+  description = "Enable S3 latest.json output"
+  type        = bool
+  default     = false
+}
+
+variable "s3_bucket_name" {
+  description = "S3 bucket name for latest.json output (optional, only used if enable_s3=true)"
+  type        = string
+  default     = "bouddha-lastest-records"
+}
+
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)
-  default     = {
+  default = {
     ManagedBy = "Terraform"
     Project   = "OilExchangeDaily"
   }
