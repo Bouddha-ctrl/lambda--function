@@ -57,31 +57,31 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect   = "Allow"
         Resource = local.ssm_param_arn
       }
-    ],
-    var.s3_bucket_name != "" ? [
-      {
-        Sid = "S3PutObject"
-        Action = [
-          "s3:PutObject"
-        ]
-        Effect   = "Allow"
-        Resource = "arn:aws:s3:::${var.s3_bucket_name}/*"
-      }
+      ],
+      var.s3_bucket_name != "" ? [
+        {
+          Sid = "S3PutObject"
+          Action = [
+            "s3:PutObject"
+          ]
+          Effect   = "Allow"
+          Resource = "arn:aws:s3:::${var.s3_bucket_name}/*"
+        }
     ] : [])
   })
 }
 
 resource "aws_lambda_function" "this" {
   # Use local file if provided, otherwise use s3 bucket/key (CI uploads zip to S3).
-  filename         = length(trim(var.lambda_zip_path, " ")) > 0 ? var.lambda_zip_path : null
-  s3_bucket        = length(trim(var.s3_bucket, " ")) > 0 ? var.s3_bucket : null
-  s3_key           = length(trim(var.s3_key, " ")) > 0 ? var.s3_key : null
+  filename  = length(trim(var.lambda_zip_path, " ")) > 0 ? var.lambda_zip_path : null
+  s3_bucket = length(trim(var.s3_bucket, " ")) > 0 ? var.s3_bucket : null
+  s3_key    = length(trim(var.s3_key, " ")) > 0 ? var.s3_key : null
 
-  function_name    = var.function_name
-  handler          = var.handler
-  runtime          = var.runtime
-  role             = aws_iam_role.lambda_role.arn
-  timeout          = 30
+  function_name = var.function_name
+  handler       = var.handler
+  runtime       = var.runtime
+  role          = aws_iam_role.lambda_role.arn
+  timeout       = 30
 
   # source_code_hash is required when providing local filename; omit when using S3
   source_code_hash = length(trim(var.lambda_zip_path, " ")) > 0 ? filebase64sha256(var.lambda_zip_path) : null
