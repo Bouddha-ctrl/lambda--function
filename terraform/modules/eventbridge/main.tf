@@ -55,4 +55,6 @@ resource "aws_scheduler_schedule" "this" {
       maximum_retry_attempts = 2
     }
   }
+  state = "DISABLED"
+
 }
