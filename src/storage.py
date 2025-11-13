@@ -19,12 +19,13 @@ def save_to_dynamodb(table_name: str, date_str: str, oil_price, exchange_rate):
 
     Parameters:
       - table_name: DynamoDB table name
-      - date_str: primary key date as ISO string (YYYY-MM-DD)
+      - date_str: sort key date as ISO string (YYYY-MM-DD)
       - oil_price: Decimal (or numeric/str convertible to Decimal) or None
       - exchange_rate: Decimal (or numeric/str convertible to Decimal) or None
 
     The stored item contains:
-      - date (PK)
+      - pk (partition key): "OIL_PRICE" (constant)
+      - date (sort key)
       - fetched_at (ISO timestamp)
       - oil_price (Decimal)  -- omitted if None
       - exchange_rate (Decimal) -- omitted if None
@@ -33,6 +34,7 @@ def save_to_dynamodb(table_name: str, date_str: str, oil_price, exchange_rate):
     """
     table = dynamodb.Table(table_name)
     item = {
+        "pk": "OIL_PRICE",
         "date": date_str,
         "fetched_at": datetime.utcnow().isoformat() + "Z",
     }

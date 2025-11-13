@@ -41,3 +41,15 @@ module "eventbridge" {
   lambda_function_name = module.lambda.function_name
   tags                 = var.tags
 }
+
+# API Gateway for querying DynamoDB
+module "apigateway" {
+  source = "./modules/apigateway"
+
+  api_name            = "oil-prices-api"
+  stage_name          = "prod"
+  dynamodb_table_name = module.dynamodb.table_name
+  dynamodb_table_arn  = module.dynamodb.table_arn
+
+  tags = var.tags
+}
