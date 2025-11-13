@@ -45,7 +45,7 @@ variable "ddb_table_name" {
 variable "schedule_expression" {
   description = "EventBridge schedule expression (AWS cron or rate)"
   type        = string
-  default     = "cron(0 0 * * ? *)"
+  default     = "cron(0 1 * * ? *)"
 }
 
 variable "enable_s3" {
