@@ -18,6 +18,9 @@ def _fetch_json(url, timeout=10, headers=None):
     """
     Internal helper: fetch a URL and parse JSON. Raises on error.
     """
+    
+    logger.info("fetching URL %s, with header : %s", url, headers is not None)
+
     try:
         req = urllib.request.Request(url)
         

@@ -71,7 +71,17 @@ resource "aws_iam_role_policy" "lambda_policy" {
   })
 }
 
+# CloudWatch Log Group with retention policy
+resource "aws_cloudwatch_log_group" "lambda_logs" {
+  name              = "/aws/lambda/${var.function_name}"
+  retention_in_days = 7
+
+  tags = var.tags
+}
+
 resource "aws_lambda_function" "this" {
+  depends_on = [aws_cloudwatch_log_group.lambda_logs]
+  
   # Use local file if provided, otherwise use s3 bucket/key (CI uploads zip to S3).
   filename  = length(trim(var.lambda_zip_path, " ")) > 0 ? var.lambda_zip_path : null
   s3_bucket = length(trim(var.s3_bucket, " ")) > 0 ? var.s3_bucket : null
