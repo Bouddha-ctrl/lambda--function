@@ -4,7 +4,7 @@ import logging
 import urllib.request
 import os
 from decimal import Decimal
-from datetime import datetime
+from datetime import datetime, timedelta
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -182,6 +182,14 @@ def fetch_oil_data(url):
     resp = _fetch_json(url)
     return parse_oil_price(resp)
 
+def get_today_date():
+    return datetime.now().strftime("%Y-%m-%d")
+
+def get_yesterday_date():
+    return (datetime.now() - timedelta(days=1)).strftime("%Y-%m-%d")
+
+def get_fetch_date():
+    return get_yesterday_date()
 
 def fetch_exchange_data(url):
     """
@@ -191,13 +199,12 @@ def fetch_exchange_data(url):
     Returns: (date_iso, rate_decimal)
     Raises: ExtractionError or network-related exceptions on failure.
     """
-    from datetime import datetime
     
     # Get today's date in yyyy-MM-dd format
-    today = datetime.now().strftime("%Y-%m-%d")
+    date = get_fetch_date()
     
     # Append date to URL
-    url_with_date = f"{url}&date={today}"
+    url_with_date = f"{url}&date={date}"
     
     # Get API key from environment
     api_key = os.environ.get("EXCHANGE_API_KEY", "")
