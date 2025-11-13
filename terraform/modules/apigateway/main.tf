@@ -1,5 +1,32 @@
 data "aws_region" "current" {}
 
+# IAM role for API Gateway CloudWatch Logs (account-level)
+resource "aws_iam_role" "cloudwatch" {
+  name = "api-gateway-cloudwatch-global"
+
+  assume_role_policy = jsonencode({
+    Version = "2012-10-17"
+    Statement = [{
+      Effect = "Allow"
+      Principal = {
+        Service = "apigateway.amazonaws.com"
+      }
+      Action = "sts:AssumeRole"
+    }]
+  })
+
+  tags = var.tags
+}
+
+resource "aws_iam_role_policy_attachment" "cloudwatch" {
+  role       = aws_iam_role.cloudwatch.name
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonAPIGatewayPushToCloudWatchLogs"
+}
+
+resource "aws_api_gateway_account" "main" {
+  cloudwatch_role_arn = aws_iam_role.cloudwatch.arn
+}
+
 # IAM role for API Gateway to access DynamoDB
 resource "aws_iam_role" "apigw" {
   name = "${var.api_name}-role"
@@ -170,4 +197,6 @@ resource "aws_api_gateway_method_settings" "api" {
     data_trace_enabled = true
     metrics_enabled    = true
   }
+
+  depends_on = [aws_api_gateway_account.main]
 }
