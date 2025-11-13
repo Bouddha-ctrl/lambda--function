@@ -1,6 +1,13 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+# S3 bucket for Lambda artifacts
+module "s3" {
+  source      = "./modules/s3"
+  bucket_name = var.s3_lambda_bucket
+  tags        = var.tags
+}
+
 # DynamoDB table for storing daily oil price + exchange rate
 module "dynamodb" {
   source     = "./modules/dynamodb"
@@ -12,7 +19,7 @@ module "dynamodb" {
 module "lambda" {
   source           = "./modules/lambda"
   lambda_zip_path  = var.lambda_zip_path
-  s3_bucket        = var.s3_lambda_bucket
+  s3_bucket        = module.s3.bucket_name
   s3_key           = var.s3_lambda_key
   function_name    = var.lambda_function_name
   handler          = "app.lambda_handler"
