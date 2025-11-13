@@ -69,7 +69,7 @@ resource "aws_api_gateway_integration" "get_all" {
   http_method             = aws_api_gateway_method.get_all.http_method
   type                    = "AWS"
   integration_http_method = "POST"
-  uri                     = "arn:aws:apigateway:${data.aws_region.current.name}:dynamodb:action/Query"
+  uri                     = "arn:aws:apigateway:${data.aws_region.current.region}:dynamodb:action/Query"
   credentials             = aws_iam_role.apigw.arn
 
   request_templates = {
@@ -126,6 +126,8 @@ resource "aws_api_gateway_integration_response" "get_all_200" {
     }
     EOT
   }
+
+  depends_on = [aws_api_gateway_integration.get_all]
 }
 
 # Deployment

@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload Lambda zip to S3
         run: |
-          KEY="lambda-${{ github.sha }}.zip"
+          KEY="lambda-artifacts.zip"
           aws s3 cp terraform/lambda.zip "s3://${{ env.LAMBDA_S3_BUCKET }}/${KEY}"
           echo "Uploaded to s3://${{ env.LAMBDA_S3_BUCKET }}/${KEY}"
           echo "s3_key=${KEY}" >> $GITHUB_OUTPUT
