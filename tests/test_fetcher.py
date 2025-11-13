@@ -421,51 +421,57 @@ def test_fetch_oil_data_network_error(mock_fetch):
 # Tests for fetch_exchange_data
 
 @patch('src.fetcher._fetch_json')
+@patch('src.fetcher.get_fetch_date')
 @patch.dict('os.environ', {}, clear=True)
-def test_fetch_exchange_data_success_no_api_key(mock_fetch):
+def test_fetch_exchange_data_success_no_api_key(mock_get_date, mock_fetch):
     """Test successful exchange data fetching without API key"""
+    mock_get_date.return_value = "2025-11-12"
     mock_fetch.return_value = {
-        "date": "2025-11-11",
+        "date": "2025-11-12",
         "info": {"rate": 9.490092},
         "success": True
     }
     
     date_iso, rate = fetch_exchange_data("http://exchange.example.com?from=USD&to=MAD")
-    assert date_iso == "2025-11-11"
+    assert date_iso == "2025-11-12"
     assert rate == Decimal("9.490092")
     
     # Verify URL has date appended and headers are empty
     call_args = mock_fetch.call_args
-    assert "date=2025-11-11" in call_args[0][0]
+    assert "date=2025-11-12" in call_args[0][0]
     assert call_args[1]['headers'] == {}
 
 
 @patch('src.fetcher._fetch_json')
+@patch('src.fetcher.get_fetch_date')
 @patch.dict('os.environ', {'EXCHANGE_API_KEY': 'test-key-123'})
-def test_fetch_exchange_data_success_with_api_key(mock_fetch):
+def test_fetch_exchange_data_success_with_api_key(mock_get_date, mock_fetch):
     """Test successful exchange data fetching with API key from environment"""
+    mock_get_date.return_value = "2025-11-12"
     mock_fetch.return_value = {
-        "date": "2025-11-11",
+        "date": "2025-11-12",
         "info": {"rate": 9.490092},
         "success": True
     }
     
     date_iso, rate = fetch_exchange_data("http://exchange.example.com?from=USD&to=MAD")
-    assert date_iso == "2025-11-11"
+    assert date_iso == "2025-11-12"
     assert rate == Decimal("9.490092")
     
     # Verify URL has date appended and API key header is set
     call_args = mock_fetch.call_args
-    assert "date=2025-11-11" in call_args[0][0]
+    assert "date=2025-11-12" in call_args[0][0]
     assert call_args[1]['headers'] == {"apikey": "test-key-123"}
 
 
 @patch('src.fetcher._fetch_json')
+@patch('src.fetcher.get_fetch_date')
 @patch.dict('os.environ', {}, clear=True)
-def test_fetch_exchange_data_url_without_query_params(mock_fetch):
+def test_fetch_exchange_data_url_without_query_params(mock_get_date, mock_fetch):
     """Test exchange data fetching appends date to URL without existing params"""
+    mock_get_date.return_value = "2025-11-12"
     mock_fetch.return_value = {
-        "date": "2025-11-11",
+        "date": "2025-11-12",
         "info": {"rate": 9.490092},
         "success": True
     }
@@ -475,12 +481,14 @@ def test_fetch_exchange_data_url_without_query_params(mock_fetch):
     # Verify URL has date appended with & (current implementation always uses &)
     call_args = mock_fetch.call_args
     url_called = call_args[0][0]
-    assert "&date=2025-11-11" in url_called
+    assert "&date=2025-11-12" in url_called
 
 
 @patch('src.fetcher._fetch_json')
-def test_fetch_exchange_data_extraction_error(mock_fetch):
+@patch('src.fetcher.get_fetch_date')
+def test_fetch_exchange_data_extraction_error(mock_get_date, mock_fetch):
     """Test exchange data fetching with extraction error"""
+    mock_get_date.return_value = "2025-11-12"
     mock_fetch.return_value = {"no_rate": True}
     
     with pytest.raises(ExtractionError):
@@ -488,8 +496,10 @@ def test_fetch_exchange_data_extraction_error(mock_fetch):
 
 
 @patch('src.fetcher._fetch_json')
-def test_fetch_exchange_data_network_error(mock_fetch):
+@patch('src.fetcher.get_fetch_date')
+def test_fetch_exchange_data_network_error(mock_get_date, mock_fetch):
     """Test exchange data fetching with network error"""
+    mock_get_date.return_value = "2025-11-12"
     mock_fetch.side_effect = Exception("Timeout")
     
     with pytest.raises(Exception, match="Timeout"):
