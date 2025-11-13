@@ -17,3 +17,13 @@ output "eventbridge_rule_name" {
   description = "Name of the EventBridge rule"
   value       = module.eventbridge.rule_name
 }
+
+output "api_endpoint" {
+  description = "API Gateway endpoint URL"
+  value       = module.apigateway.api_endpoint
+}
+
+output "api_url_get_latest" {
+  description = "Full URL to get latest 30 oil prices"
+  value       = module.apigateway.api_url_get_latest
+}
