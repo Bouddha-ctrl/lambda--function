@@ -7,11 +7,11 @@ from datetime import datetime
 
 # Support both Lambda (flat structure) and local dev (src. prefix)
 try:
-    from fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
+    from fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError, get_fetch_date
     from ssm_resolver import get_store_urls
     from storage import save_to_dynamodb
 except ImportError:
-    from src.fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
+    from src.fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError, get_fetch_date
     from src.ssm_resolver import get_store_urls
     from src.storage import save_to_dynamodb
 
@@ -45,25 +45,42 @@ def lambda_handler(event, context):
     ddb_table = os.environ.get("DDB_TABLE_NAME", "OilPrices")
 
     try:
-        # Fetcher handles HTTP call + parsing and returns (date, value) directly
+        # Fetch oil price first
         oil_source_date, oil_val = fetch_oil_data(oil_api)
-        exchange_source_date, exchange_val = fetch_exchange_data(exchange_api)
-
-        # persist only if source dates match
-        if oil_source_date != exchange_source_date:
-            logger.warning(
-                "Source date mismatch: oil_source_date=%s exchange_source_date=%s — skipping persist",
+        
+        # Check if oil price has the expected date (yesterday)
+        expected_date = get_fetch_date()
+        if oil_source_date != expected_date:
+            logger.info(
+                "Oil price date (%s) is not expected date (%s) — skipping exchange fetch",
                 oil_source_date,
-                exchange_source_date,
+                expected_date,
             )
             return {
                 "status": "skipped",
-                "message": "source dates differ; not persisted",
+                "message": "oil price not from expected date; exchange fetch skipped",
                 "oil_source_date": oil_source_date,
+                "expected_date": expected_date,
+            }
+        
+        # Oil price date matches - now fetch exchange rate
+        exchange_source_date, exchange_val = fetch_exchange_data(exchange_api)
+
+        # Verify exchange rate also has the expected date before persisting
+        if exchange_source_date != expected_date:
+            logger.warning(
+                "Exchange rate date (%s) is not expected date (%s) — skipping persist",
+                exchange_source_date,
+                expected_date,
+            )
+            return {
+                "status": "skipped",
+                "message": "exchange rate not from expected date; not persisted",
                 "exchange_source_date": exchange_source_date,
+                "expected_date": expected_date,
             }
 
-        date_str = oil_source_date or datetime.utcnow().date().isoformat()
+        date_str = expected_date
 
         # Persist minimal record (date, oil_price, exchange_rate)
         save_to_dynamodb(
