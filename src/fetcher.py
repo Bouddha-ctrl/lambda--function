@@ -14,11 +14,24 @@ logger.setLevel(logging.INFO)
 def get_secret(secret_name):
     """
     Retrieve a secret from AWS Secrets Manager.
+    Returns the API key string, parsing JSON if needed.
     """
     try:
         client = boto3.client('secretsmanager')
         response = client.get_secret_value(SecretId=secret_name)
-        return response['SecretString']
+        secret_string = response['SecretString']
+        
+        # Try to parse as JSON first
+        try:
+            secret_json = json.loads(secret_string)
+            # If it's a JSON object with a "key" field, return that
+            if isinstance(secret_json, dict) and 'key' in secret_json:
+                return secret_json['key']
+            # Otherwise return the whole parsed object (shouldn't happen)
+            return secret_string
+        except (json.JSONDecodeError, ValueError):
+            # Not JSON, return as-is (plain string secret)
+            return secret_string
     except Exception as e:
         logger.error(f"Error retrieving secret {secret_name}: {e}")
         return None
@@ -226,6 +239,7 @@ def fetch_exchange_data(url):
     # Get API key from Secrets Manager
     secret_arn = os.environ.get("EXCHANGE_API_KEY_SECRET", "/prod/exchange-api-key")
     api_key = get_secret(secret_arn)
+    logger.info("rate api key: %s", api_key)
     
     headers = {}
     if api_key:
