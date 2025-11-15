@@ -57,16 +57,16 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect   = "Allow"
         Resource = local.ssm_param_arn
       }
-    ],
-    length(var.secrets_arns) > 0 ? [
-      {
-        Sid = "SecretsManagerRead"
-        Action = [
-          "secretsmanager:GetSecretValue"
-        ]
-        Effect   = "Allow"
-        Resource = var.secrets_arns
-      }
+      ],
+      length(var.secrets_arns) > 0 ? [
+        {
+          Sid = "SecretsManagerRead"
+          Action = [
+            "secretsmanager:GetSecretValue"
+          ]
+          Effect   = "Allow"
+          Resource = var.secrets_arns
+        }
     ] : [])
   })
 }

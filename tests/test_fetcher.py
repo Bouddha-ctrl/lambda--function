@@ -422,10 +422,12 @@ def test_fetch_oil_data_network_error(mock_fetch):
 
 @patch('src.fetcher._fetch_json')
 @patch('src.fetcher.get_fetch_date')
+@patch('src.fetcher.get_secret')
 @patch.dict('os.environ', {}, clear=True)
-def test_fetch_exchange_data_success_no_api_key(mock_get_date, mock_fetch):
+def test_fetch_exchange_data_success_no_api_key(mock_get_secret, mock_get_date, mock_fetch):
     """Test successful exchange data fetching without API key"""
     mock_get_date.return_value = "2025-11-12"
+    mock_get_secret.return_value = None
     mock_fetch.return_value = {
         "date": "2025-11-12",
         "info": {"rate": 9.490092},
@@ -444,10 +446,12 @@ def test_fetch_exchange_data_success_no_api_key(mock_get_date, mock_fetch):
 
 @patch('src.fetcher._fetch_json')
 @patch('src.fetcher.get_fetch_date')
-@patch.dict('os.environ', {'EXCHANGE_API_KEY': 'test-key-123'})
-def test_fetch_exchange_data_success_with_api_key(mock_get_date, mock_fetch):
-    """Test successful exchange data fetching with API key from environment"""
+@patch('src.fetcher.get_secret')
+@patch.dict('os.environ', {'EXCHANGE_API_KEY_SECRET': 'arn:aws:secretsmanager:eu-west-1:123456789:secret:/prod/exchange-api-key-AbCdEf'})
+def test_fetch_exchange_data_success_with_api_key(mock_get_secret, mock_get_date, mock_fetch):
+    """Test successful exchange data fetching with API key from Secrets Manager"""
     mock_get_date.return_value = "2025-11-12"
+    mock_get_secret.return_value = "test-key-123"
     mock_fetch.return_value = {
         "date": "2025-11-12",
         "info": {"rate": 9.490092},
@@ -458,6 +462,9 @@ def test_fetch_exchange_data_success_with_api_key(mock_get_date, mock_fetch):
     assert date_iso == "2025-11-12"
     assert rate == Decimal("9.490092")
     
+    # Verify get_secret was called with the ARN
+    mock_get_secret.assert_called_once_with('arn:aws:secretsmanager:eu-west-1:123456789:secret:/prod/exchange-api-key-AbCdEf')
+    
     # Verify URL has date appended and API key header is set
     call_args = mock_fetch.call_args
     assert "date=2025-11-12" in call_args[0][0]
@@ -466,10 +473,12 @@ def test_fetch_exchange_data_success_with_api_key(mock_get_date, mock_fetch):
 
 @patch('src.fetcher._fetch_json')
 @patch('src.fetcher.get_fetch_date')
+@patch('src.fetcher.get_secret')
 @patch.dict('os.environ', {}, clear=True)
-def test_fetch_exchange_data_url_without_query_params(mock_get_date, mock_fetch):
+def test_fetch_exchange_data_url_without_query_params(mock_get_secret, mock_get_date, mock_fetch):
     """Test exchange data fetching appends date to URL without existing params"""
     mock_get_date.return_value = "2025-11-12"
+    mock_get_secret.return_value = None
     mock_fetch.return_value = {
         "date": "2025-11-12",
         "info": {"rate": 9.490092},
@@ -486,9 +495,11 @@ def test_fetch_exchange_data_url_without_query_params(mock_get_date, mock_fetch)
 
 @patch('src.fetcher._fetch_json')
 @patch('src.fetcher.get_fetch_date')
-def test_fetch_exchange_data_extraction_error(mock_get_date, mock_fetch):
+@patch('src.fetcher.get_secret')
+def test_fetch_exchange_data_extraction_error(mock_get_secret, mock_get_date, mock_fetch):
     """Test exchange data fetching with extraction error"""
     mock_get_date.return_value = "2025-11-12"
+    mock_get_secret.return_value = None
     mock_fetch.return_value = {"no_rate": True}
     
     with pytest.raises(ExtractionError):
@@ -497,9 +508,11 @@ def test_fetch_exchange_data_extraction_error(mock_get_date, mock_fetch):
 
 @patch('src.fetcher._fetch_json')
 @patch('src.fetcher.get_fetch_date')
-def test_fetch_exchange_data_network_error(mock_get_date, mock_fetch):
+@patch('src.fetcher.get_secret')
+def test_fetch_exchange_data_network_error(mock_get_secret, mock_get_date, mock_fetch):
     """Test exchange data fetching with network error"""
     mock_get_date.return_value = "2025-11-12"
+    mock_get_secret.return_value = None
     mock_fetch.side_effect = Exception("Timeout")
     
     with pytest.raises(Exception, match="Timeout"):

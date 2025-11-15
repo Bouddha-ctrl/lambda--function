@@ -27,8 +27,8 @@ module "lambda" {
   store_param_name = var.store_param_name
 
   environment = {
-    DDB_TABLE_NAME           = module.dynamodb.table_name
-    EXCHANGE_API_KEY_SECRET  = module.secrets.secret_arn
+    DDB_TABLE_NAME          = module.dynamodb.table_name
+    EXCHANGE_API_KEY_SECRET = module.secrets.secret_arn
   }
 
   dynamodb_table_arn = module.dynamodb.table_arn
