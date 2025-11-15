@@ -103,7 +103,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Upload Lambda zip to S3
-          run: |
+        run: |
           KEY="lambda-artifacts.zip"
           aws s3 cp terraform/lambda.zip "s3://${{ env.LAMBDA_S3_BUCKET }}/${KEY}"
           echo "Uploaded to s3://${{ env.LAMBDA_S3_BUCKET }}/${KEY}"
