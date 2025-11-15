@@ -18,6 +18,7 @@ def get_secret(secret_name):
     try:
         client = boto3.client('secretsmanager')
         response = client.get_secret_value(SecretId=secret_name)
+        logger.info("get secret response: %s", response)
         return response['SecretString']
     except Exception as e:
         logger.error(f"Error retrieving secret {secret_name}: {e}")
@@ -226,6 +227,7 @@ def fetch_exchange_data(url):
     # Get API key from Secrets Manager
     secret_arn = os.environ.get("EXCHANGE_API_KEY_SECRET", "/prod/exchange-api-key")
     api_key = get_secret(secret_arn)
+    logger.info("rate api key: %s", api_key)
     
     headers = {}
     if api_key:
