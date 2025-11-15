@@ -21,14 +21,10 @@ module "lambda" {
 
   environment = {
     DDB_TABLE_NAME   = module.dynamodb.table_name
-    ENABLE_S3        = var.enable_s3 ? "true" : "false"
-    S3_BUCKET_NAME   = var.s3_bucket_name
-    S3_KEY           = "latest.json"
     EXCHANGE_API_KEY = var.exchange_api_key
   }
 
   dynamodb_table_arn = module.dynamodb.table_arn
-  s3_bucket_name     = var.enable_s3 ? var.s3_bucket_name : ""
   tags               = var.tags
 }
 

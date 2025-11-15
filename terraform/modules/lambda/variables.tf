@@ -42,12 +42,6 @@ variable "dynamodb_table_arn" {
   type        = string
 }
 
-variable "s3_bucket_name" {
-  description = "S3 bucket name for optional output (if ENABLE_S3=true)"
-  type        = string
-  default     = ""
-}
-
 variable "store_param_name" {
   description = "SSM parameter name containing the JSON with oil_api and exchange_api"
   type        = string

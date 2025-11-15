@@ -28,7 +28,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
 
   policy = jsonencode({
     Version = "2012-10-17"
-    Statement = concat([
+    Statement = [
       {
         Sid = "DynamoDBAccess"
         Action = [
@@ -57,17 +57,7 @@ resource "aws_iam_role_policy" "lambda_policy" {
         Effect   = "Allow"
         Resource = local.ssm_param_arn
       }
-      ],
-      var.s3_bucket_name != "" ? [
-        {
-          Sid = "S3PutObject"
-          Action = [
-            "s3:PutObject"
-          ]
-          Effect   = "Allow"
-          Resource = "arn:aws:s3:::${var.s3_bucket_name}/*"
-        }
-    ] : [])
+    ]
   })
 }
 

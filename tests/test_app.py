@@ -36,7 +36,6 @@ def test_lambda_persists_on_date_match(monkeypatch):
         }
 
     monkeypatch.setattr(appmod, "save_to_dynamodb", fake_save_to_dynamodb)
-    monkeypatch.setattr(appmod, "save_latest_to_s3", lambda *a, **k: None)  # noop
 
     # Act
     result = appmod.lambda_handler({}, None)
@@ -72,7 +71,6 @@ def test_lambda_skips_on_date_mismatch(monkeypatch):
         persisted["called"] = True
 
     monkeypatch.setattr(appmod, "save_to_dynamodb", fake_save_to_dynamodb)
-    monkeypatch.setattr(appmod, "save_latest_to_s3", lambda *a, **k: None)  # noop
 
     # Act
     result = appmod.lambda_handler({}, None)

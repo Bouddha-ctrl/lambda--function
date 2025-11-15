@@ -9,11 +9,11 @@ from datetime import datetime
 try:
     from fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
     from ssm_resolver import get_store_urls
-    from storage import save_to_dynamodb, save_latest_to_s3
+    from storage import save_to_dynamodb
 except ImportError:
     from src.fetcher import fetch_oil_data, fetch_exchange_data, ExtractionError
     from src.ssm_resolver import get_store_urls
-    from src.storage import save_to_dynamodb, save_latest_to_s3
+    from src.storage import save_to_dynamodb
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -41,11 +41,8 @@ def lambda_handler(event, context):
         logger.error("Resolved store missing URLs")
         return {"status": "error", "message": "resolved store missing urls"}
 
-    # DynamoDB table name and optional S3 settings remain env-driven
+    # DynamoDB table name from environment
     ddb_table = os.environ.get("DDB_TABLE_NAME", "OilPrices")
-    enable_s3 = os.environ.get("ENABLE_S3", "false").lower() == "true"
-    s3_bucket = os.environ.get("S3_BUCKET_NAME")
-    s3_key = os.environ.get("S3_KEY", "latest.json")
 
     try:
         # Fetcher handles HTTP call + parsing and returns (date, value) directly
@@ -75,17 +72,6 @@ def lambda_handler(event, context):
             oil_price=oil_val,
             exchange_rate=exchange_val,
         )
-
-        if enable_s3:
-            latest = {
-                "date": date_str,
-                "oil_price": str(oil_val) if oil_val is not None else None,
-                "exchange_rate": str(exchange_val) if exchange_val is not None else None,
-                "oil_source_date": oil_source_date,
-                "exchange_source_date": exchange_source_date,
-                "fetched_at": datetime.utcnow().isoformat() + "Z",
-            }
-            save_latest_to_s3(s3_bucket, s3_key, latest)
 
         return {"status": "ok", "date": date_str}
     except ExtractionError as e:

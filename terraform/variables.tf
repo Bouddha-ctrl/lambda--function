@@ -48,18 +48,6 @@ variable "schedule_expression" {
   default     = "cron(0 1 * * ? *)"
 }
 
-variable "enable_s3" {
-  description = "Enable S3 latest.json output"
-  type        = bool
-  default     = false
-}
-
-variable "s3_bucket_name" {
-  description = "S3 bucket name for latest.json output (optional, only used if enable_s3=true)"
-  type        = string
-  default     = "bouddha-lastest-records"
-}
-
 variable "exchange_api_key" {
   description = "API key for exchange rate API"
   type        = string
