@@ -79,13 +79,21 @@ resource "aws_cloudwatch_log_group" "lambda_logs" {
   tags = var.tags
 }
 
+# Data source to get S3 object metadata (including version)
+data "aws_s3_object" "lambda_zip" {
+  count  = length(trim(var.s3_bucket, " ")) > 0 && length(trim(var.s3_key, " ")) > 0 ? 1 : 0
+  bucket = var.s3_bucket
+  key    = var.s3_key
+}
+
 resource "aws_lambda_function" "this" {
   depends_on = [aws_cloudwatch_log_group.lambda_logs]
 
   # Use local file if provided, otherwise use s3 bucket/key (CI uploads zip to S3).
-  filename  = length(trim(var.lambda_zip_path, " ")) > 0 ? var.lambda_zip_path : null
-  s3_bucket = length(trim(var.s3_bucket, " ")) > 0 ? var.s3_bucket : null
-  s3_key    = length(trim(var.s3_key, " ")) > 0 ? var.s3_key : null
+  filename         = length(trim(var.lambda_zip_path, " ")) > 0 ? var.lambda_zip_path : null
+  s3_bucket        = length(trim(var.s3_bucket, " ")) > 0 ? var.s3_bucket : null
+  s3_key           = length(trim(var.s3_key, " ")) > 0 ? var.s3_key : null
+  s3_object_version = length(data.aws_s3_object.lambda_zip) > 0 ? data.aws_s3_object.lambda_zip[0].version_id : null
 
   function_name = var.function_name
   handler       = var.handler
@@ -93,8 +101,8 @@ resource "aws_lambda_function" "this" {
   role          = aws_iam_role.lambda_role.arn
   timeout       = 30
 
-  # source_code_hash is required when providing local filename; omit when using S3
-  source_code_hash = length(trim(var.lambda_zip_path, " ")) > 0 ? filebase64sha256(var.lambda_zip_path) : null
+  # source_code_hash: use local file hash or S3 object etag
+  source_code_hash = length(trim(var.lambda_zip_path, " ")) > 0 ? filebase64sha256(var.lambda_zip_path) : (length(data.aws_s3_object.lambda_zip) > 0 ? data.aws_s3_object.lambda_zip[0].etag : null)
 
   environment {
     variables = var.environment
