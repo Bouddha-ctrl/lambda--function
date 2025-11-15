@@ -3,11 +3,25 @@ import json
 import logging
 import urllib.request
 import os
+import boto3
 from decimal import Decimal
 from datetime import datetime, timedelta
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
+def get_secret(secret_name):
+    """
+    Retrieve a secret from AWS Secrets Manager.
+    """
+    try:
+        client = boto3.client('secretsmanager')
+        response = client.get_secret_value(SecretId=secret_name)
+        return response['SecretString']
+    except Exception as e:
+        logger.error(f"Error retrieving secret {secret_name}: {e}")
+        return None
 
 
 class ExtractionError(Exception):
@@ -198,7 +212,7 @@ def fetch_exchange_data(url):
     """
     Fetch exchange rate data from the given URL.
     Appends today's date in format yyyy-MM-dd to the URL.
-    Adds API key from environment variable EXCHANGE_API_KEY to headers.
+    Retrieves API key from AWS Secrets Manager.
     Returns: (date_iso, rate_decimal)
     Raises: ExtractionError or network-related exceptions on failure.
     """
@@ -209,8 +223,10 @@ def fetch_exchange_data(url):
     # Append date to URL
     url_with_date = f"{url}&date={date}"
     
-    # Get API key from environment
-    api_key = os.environ.get("EXCHANGE_API_KEY", "")
+    # Get API key from Secrets Manager
+    secret_arn = os.environ.get("EXCHANGE_API_KEY_SECRET", "/prod/exchange-api-key")
+    api_key = get_secret(secret_arn)
+    
     headers = {}
     if api_key:
         headers["apikey"] = api_key

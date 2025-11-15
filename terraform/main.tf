@@ -1,6 +1,13 @@
 data "aws_caller_identity" "current" {}
 data "aws_region" "current" {}
 
+# Secrets Manager for API keys
+module "secrets" {
+  source = "./modules/secrets"
+
+  secret_name = "/prod/exchange-api-key"
+}
+
 # DynamoDB table for storing daily oil price + exchange rate
 module "dynamodb" {
   source     = "./modules/dynamodb"
@@ -20,11 +27,12 @@ module "lambda" {
   store_param_name = var.store_param_name
 
   environment = {
-    DDB_TABLE_NAME   = module.dynamodb.table_name
-    EXCHANGE_API_KEY = var.exchange_api_key
+    DDB_TABLE_NAME          = module.dynamodb.table_name
+    EXCHANGE_API_KEY_SECRET = module.secrets.secret_arn
   }
 
   dynamodb_table_arn = module.dynamodb.table_arn
+  secrets_arns       = [module.secrets.secret_arn]
   tags               = var.tags
 }
 

@@ -48,13 +48,6 @@ variable "schedule_expression" {
   default     = "cron(0 1 * * ? *)"
 }
 
-variable "exchange_api_key" {
-  description = "API key for exchange rate API"
-  type        = string
-  sensitive   = true
-  default     = ""
-}
-
 variable "tags" {
   description = "Tags to apply to resources"
   type        = map(string)

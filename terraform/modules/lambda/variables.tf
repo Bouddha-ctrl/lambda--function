@@ -42,6 +42,12 @@ variable "dynamodb_table_arn" {
   type        = string
 }
 
+variable "secrets_arns" {
+  description = "List of Secrets Manager ARNs the Lambda needs access to"
+  type        = list(string)
+  default     = []
+}
+
 variable "store_param_name" {
   description = "SSM parameter name containing the JSON with oil_api and exchange_api"
   type        = string
