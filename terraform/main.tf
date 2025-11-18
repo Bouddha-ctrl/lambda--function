@@ -57,3 +57,16 @@ module "apigateway" {
 
   tags = var.tags
 }
+
+# CloudFront distribution for API Gateway
+module "cloudfront" {
+  source = "./modules/cloudfront"
+
+  api_gateway_domain_name = module.apigateway.api_domain_name
+  api_gateway_stage_name  = module.apigateway.stage_name
+
+  cache_default_ttl = 3600  # 1 hour cache
+  cache_max_ttl     = 86400 # 24 hours max
+
+  tags = var.tags
+}
