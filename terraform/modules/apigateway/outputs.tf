@@ -10,7 +10,7 @@ output "api_endpoint" {
 
 output "api_domain_name" {
   description = "API Gateway domain name (without https://)"
-  value       = replace(aws_api_gateway_deployment.api.invoke_url, "/^https?:\\/\\//", "")
+  value       = replace(replace(aws_api_gateway_stage.api.invoke_url, "https://", ""), "/prod", "")
 }
 
 output "stage_name" {
