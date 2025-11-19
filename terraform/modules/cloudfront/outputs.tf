@@ -22,3 +22,8 @@ output "log_group_name" {
   description = "CloudWatch log group name for CloudFront logs"
   value       = aws_cloudwatch_log_group.cloudfront_logs.name
 }
+
+output "log_group_arn" {
+  description = "CloudWatch log group ARN for CloudFront logs"
+  value       = aws_cloudwatch_log_group.cloudfront_logs.arn
+}

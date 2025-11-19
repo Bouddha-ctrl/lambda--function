@@ -1,10 +1,3 @@
-resource "aws_cloudwatch_log_group" "cloudfront_logs" {
-  name              = "${var.log_group_name_prefix}/${var.api_gateway_domain_name}"
-  retention_in_days = 1
-
-  tags = var.tags
-}
-
 resource "aws_cloudfront_distribution" "api_distribution" {
   enabled             = true
   is_ipv6_enabled     = true
@@ -45,11 +38,6 @@ resource "aws_cloudfront_distribution" "api_distribution" {
     default_ttl            = var.cache_default_ttl
     max_ttl                = var.cache_max_ttl
     compress               = true
-  }
-
-  logging_config {
-    include_cookies = false
-    log_group       = aws_cloudwatch_log_group.cloudfront_logs.name
   }
 
   restrictions {
