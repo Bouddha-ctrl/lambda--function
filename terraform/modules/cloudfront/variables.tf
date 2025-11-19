@@ -33,6 +33,12 @@ variable "cache_max_ttl" {
   default     = 86400 # 24 hours
 }
 
+variable "log_group_name_prefix" {
+  description = "Prefix for CloudWatch log group name"
+  type        = string
+  default     = "/aws/cloudfront"
+}
+
 variable "tags" {
   description = "Tags to apply to CloudFront distribution"
   type        = map(string)
