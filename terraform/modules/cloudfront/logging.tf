@@ -43,8 +43,8 @@ resource "aws_cloudwatch_logs_delivery_source" "cloudfront" {
 }
 
 resource "aws_cloudwatch_logs_delivery" "cloudfront" {
-  delivery_source_name      = aws_cloudwatch_logs_delivery_source.cloudfront.name
-  delivery_destination_arn  = aws_cloudwatch_logs_delivery_destination.cloudfront.arn
+  delivery_source_name     = aws_cloudwatch_logs_delivery_source.cloudfront.name
+  delivery_destination_arn = aws_cloudwatch_logs_delivery_destination.cloudfront.arn
 
   tags = var.tags
 }
