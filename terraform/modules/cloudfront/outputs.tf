@@ -17,13 +17,3 @@ output "distribution_url" {
   description = "Full CloudFront distribution URL"
   value       = "https://${aws_cloudfront_distribution.api_distribution.domain_name}"
 }
-
-output "log_group_name" {
-  description = "CloudWatch log group name for CloudFront logs"
-  value       = aws_cloudwatch_log_group.cloudfront_logs.name
-}
-
-output "log_group_arn" {
-  description = "CloudWatch log group ARN for CloudFront logs"
-  value       = aws_cloudwatch_log_group.cloudfront_logs.arn
-}
