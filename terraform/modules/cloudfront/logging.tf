@@ -5,7 +5,7 @@ resource "aws_cloudwatch_log_group" "cloudfront_logs" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_logs_delivery_destination" "cloudfront" {
+resource "aws_cloudwatch_log_delivery_destination" "cloudfront" {
   name = "${var.api_gateway_domain_name}-cloudfront-logs"
 
   destination_resource_arn = aws_cloudwatch_log_group.cloudfront_logs.arn
@@ -13,8 +13,8 @@ resource "aws_cloudwatch_logs_delivery_destination" "cloudfront" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_logs_delivery_destination_policy" "cloudfront" {
-  destination_name = aws_cloudwatch_logs_delivery_destination.cloudfront.name
+resource "aws_cloudwatch_log_delivery_destination_policy" "cloudfront" {
+  destination_name = aws_cloudwatch_log_delivery_destination.cloudfront.name
 
   delivery_destination_policy = jsonencode({
     Version = "2012-10-17"
@@ -34,7 +34,7 @@ resource "aws_cloudwatch_logs_delivery_destination_policy" "cloudfront" {
   })
 }
 
-resource "aws_cloudwatch_logs_delivery_source" "cloudfront" {
+resource "aws_cloudwatch_log_delivery_source" "cloudfront" {
   name          = "${var.api_gateway_domain_name}-cloudfront"
   log_type      = "CloudFront-Standard"
   resource_arns = [aws_cloudfront_distribution.api_distribution.arn]
@@ -42,9 +42,9 @@ resource "aws_cloudwatch_logs_delivery_source" "cloudfront" {
   tags = var.tags
 }
 
-resource "aws_cloudwatch_logs_delivery" "cloudfront" {
-  delivery_source_name     = aws_cloudwatch_logs_delivery_source.cloudfront.name
-  delivery_destination_arn = aws_cloudwatch_logs_delivery_destination.cloudfront.arn
+resource "aws_cloudwatch_log_delivery" "cloudfront" {
+  delivery_source_name     = aws_cloudwatch_log_delivery_source.cloudfront.name
+  delivery_destination_arn = aws_cloudwatch_log_delivery_destination.cloudfront.arn
 
   tags = var.tags
 }
