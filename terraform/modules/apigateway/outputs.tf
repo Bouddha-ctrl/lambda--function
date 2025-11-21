@@ -8,6 +8,16 @@ output "api_endpoint" {
   value       = aws_api_gateway_stage.api.invoke_url
 }
 
+output "api_domain_name" {
+  description = "API Gateway domain name (without https://)"
+  value       = replace(replace(aws_api_gateway_stage.api.invoke_url, "https://", ""), "/prod", "")
+}
+
+output "stage_name" {
+  description = "API Gateway stage name"
+  value       = aws_api_gateway_stage.api.stage_name
+}
+
 output "api_url_get_latest" {
   description = "URL to get latest 30 oil prices"
   value       = "${aws_api_gateway_stage.api.invoke_url}/oil-prices"
