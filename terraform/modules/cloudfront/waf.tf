@@ -1,6 +1,6 @@
 resource "aws_wafv2_web_acl" "cloudfront_waf" {
   provider = aws.us_east_1
-  name     = "${var.api_gateway_domain_name}-cloudfront-waf"
+  name     = replace("${var.api_gateway_domain_name}-cloudfront-waf", "/[^a-zA-Z0-9-_]/", "-")
   scope    = "CLOUDFRONT"
 
   default_action {
