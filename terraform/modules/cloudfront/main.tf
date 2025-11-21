@@ -4,6 +4,7 @@ resource "aws_cloudfront_distribution" "api_distribution" {
   comment             = "CloudFront distribution for ${var.api_gateway_domain_name}"
   price_class         = var.price_class
   default_root_object = ""
+  web_acl_id          = aws_wafv2_web_acl.cloudfront_waf.arn
 
   origin {
     domain_name = var.api_gateway_domain_name

@@ -33,6 +33,12 @@ variable "cache_max_ttl" {
   default     = 86400 # 24 hours
 }
 
+variable "rate_limit_requests" {
+  description = "Rate limit for requests per 5 minutes per IP"
+  type        = number
+  default     = 30
+}
+
 variable "tags" {
   description = "Tags to apply to CloudFront distribution"
   type        = map(string)
