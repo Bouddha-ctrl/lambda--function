@@ -18,7 +18,7 @@ variable "price_class" {
 variable "cache_min_ttl" {
   description = "Minimum TTL for cached objects (seconds)"
   type        = number
-  default     = 0
+  default     = 1800
 }
 
 variable "cache_default_ttl" {
