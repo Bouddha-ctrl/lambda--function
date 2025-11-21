@@ -62,6 +62,10 @@ module "apigateway" {
 module "cloudfront" {
   source = "./modules/cloudfront"
 
+  providers = {
+    aws.us_east_1 = aws.us_east_1
+  }
+
   api_gateway_domain_name = module.apigateway.api_domain_name
   api_gateway_stage_name  = module.apigateway.stage_name
 

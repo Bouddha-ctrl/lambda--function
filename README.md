@@ -4,10 +4,94 @@ AWS Lambda function that fetches daily oil prices and USD to MAD exchange rates,
 
 ## Architecture
 
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                              AWS Cloud (eu-west-1)                          │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌──────────────┐         ┌────────────────────────────────────┐           │
+│  │ EventBridge  │ 01:00   │         Lambda Function            │           │
+│  │ (Cron Rule)  │────────>│  daily-oil-exchange-fetcher        │           │
+│  └──────────────┘  UTC    │  Runtime: Python 3.10              │           │
+│                           └─────────────┬──────────────────────┘           │
+│                                         │                                   │
+│                                         │ Fetches Data                      │
+│                           ┌─────────────┼────────────┐                      │
+│                           │             │            │                      │
+│                           ▼             ▼            ▼                      │
+│                    ┌─────────┐   ┌──────────┐  ┌──────────────┐            │
+│                    │   SSM   │   │ Secrets  │  │  DynamoDB    │            │
+│                    │Parameter│   │ Manager  │  │  OilPrices   │            │
+│                    │  Store  │   │          │  │              │            │
+│                    │         │   │ API Key  │  │ pk: OIL_PRICE│            │
+│                    │API URLs │   │   (JSON) │  │ sk: date     │            │
+│                    └─────────┘   └──────────┘  └──────┬───────┘            │
+│                                                        │                    │
+│                                                        │ Query (VTL)        │
+│                                                 ┌──────▼───────────┐        │
+│                                                 │  API Gateway     │        │
+│                                                 │  REST API        │        │
+│                                                 │                  │        │
+│                                                 │ Direct DynamoDB  │        │
+│                                                 │  Integration     │        │
+│                                                 └──────┬───────────┘        │
+│                                                        │ HTTPS              │
+│                                                        │                    │
+│                                                 ┌──────▼───────────┐        │
+│                                                 │   CloudFront     │        │
+│                                                 │  Distribution    │        │
+│                                                 │                  │        │
+│                                                 │ Cache: 1hr TTL   │        │
+│                                                 │ HTTPS Only       │        │
+│                                                 └──────┬───────────┘        │
+│                                                        │                    │
+│  ┌──────────────┐  GET /oil-prices                    │                    │
+│  │   Client     │<───────────────────────────────────┘                    │
+│  │  (External)  │  Cached JSON Response                                    │
+│  └──────────────┘                                                          │
+│                                                                             │
+│  ┌──────────────────────────────────────────────────────────────┐          │
+│  │                   CI/CD Pipeline                             │          │
+│  │  ┌────────────┐       ┌──────────┐       ┌────────────┐     │          │
+│  │  │  GitHub    │       │    S3    │       │ Terraform  │     │          │
+│  │  │  Actions   │──────>│ Artifacts│──────>│   State    │     │          │
+│  │  └────────────┘       │ (Lambda) │       │  Backend   │     │          │
+│  │                       │ Versioned│       └────────────┘     │          │
+│  │                       └──────────┘                           │          │
+│  └──────────────────────────────────────────────────────────────┘          │
+│                                                                             │
+│  ┌──────────────┐                                                          │
+│  │ CloudWatch   │  ← Lambda & API Gateway Logs (7-day retention)           │
+│  │    Logs      │                                                          │
+│  └──────────────┘                                                          │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+External APIs:
+  ↓
+┌─────────────────┐        ┌──────────────────┐
+│  Oil Price API  │        │ Exchange Rate API│
+│  (Daily Data)   │        │   (USD → MAD)    │
+└─────────────────┘        └──────────────────┘
+```
+
+**Data Flow:**
+
+1. **Scheduled Trigger**: EventBridge triggers Lambda daily at 01:00 UTC
+2. **Fetch Configuration**: Lambda reads API URLs from SSM Parameter Store
+3. **Fetch Oil Price**: Lambda calls external Oil Price API
+4. **Validate Date**: Checks if oil price date matches expected date (yesterday)
+5. **Fetch Exchange Rate**: If valid, retrieves API key from Secrets Manager and calls Exchange Rate API
+6. **Validate & Store**: If both dates match, saves to DynamoDB with `pk="OIL_PRICE"` and `date` as sort key
+7. **Query Data**: Clients access CloudFront URL → CloudFront caches and forwards to API Gateway → API Gateway directly queries DynamoDB via VTL templates → Returns latest 30 records
+
+**Components:**
+
 - **Lambda Function**: Fetches oil price and exchange rate data daily
 - **DynamoDB**: Stores historical price data with partition key `pk="OIL_PRICE"` and sort key `date`
 - **EventBridge**: Triggers Lambda daily at 01:00 UTC
-- **API Gateway**: REST API to query latest 30 records
+- **API Gateway**: REST API with direct DynamoDB integration (VTL templates)
+- **CloudFront**: CDN for caching API responses (1-hour default TTL)
 - **Secrets Manager**: Securely stores exchange rate API key
 - **S3**: Lambda deployment artifacts bucket
 
